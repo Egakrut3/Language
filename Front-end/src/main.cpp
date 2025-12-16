@@ -20,21 +20,23 @@ int main(int const argc, char const *const *const argv) {
 
     Bin_tree_node *cur_node = nullptr;
     MAIN_CHECK_FUNC(str_infix_read_subtree, &cur_node, buffer);
+    MAIN_CHECK_FUNC(subtree_text_dump, cur_config.out_stream, cur_node);
+    fclose(cur_config.out_stream);
+    cur_config.out_stream = nullptr;
+
 
     FILE *out_stream = nullptr;
-    MAIN_CHECK_FUNC(fopen_s, &out_stream, "./Tree", "w"); //TODO -
-    MAIN_CHECK_FUNC(subtree_text_dump, out_stream, cur_node);
-    fclose(out_stream);
-    out_stream = nullptr;
-
-
     MAIN_CHECK_FUNC(fopen_s, &out_stream, "./Logs/dot_file", "w");
     MAIN_CHECK_FUNC(subtree_dot_dump, out_stream, cur_node);
     fclose(out_stream);
+    out_stream = nullptr;
     MAIN_CHECK_FUNC(system, "dot -Tsvg ./Logs/dot_file > ./Logs/dot_log.svg");
+    
 
+    MAIN_CHECK_FUNC(delete_Bin_tree_node, cur_node);
+    cur_node = nullptr;
 
-    colored_printf(GREEN, BLACK, "\n\n\nCOMMIT GITHUB\n\n");
+    //colored_printf(GREEN, BLACK, "\n\n\nCOMMIT GITHUB\n\n");
     CLEAR_RESOURCES();
     return 0;
 

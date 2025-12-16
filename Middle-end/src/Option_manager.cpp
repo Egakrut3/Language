@@ -7,6 +7,7 @@ enum Option
 {
     HELP_OPTION,
     IN_OPTION,
+    OUT_OPTION,
     __OPTION_COUNT,
 };
 
@@ -23,9 +24,11 @@ static errno_t set_help_config(Config *const config_ptr,
     printf("Usage: Test.exe [options] file...\nOptions:\n"
            "\t%-10s %s"
            "\t%-10s %s"
+           "\t%-10s %s"
            "\n",
            "--help", "Display the information",
-           "--in",   "Sets path to the input-file");
+           "--in",   "Sets path to the input-file",
+           "--out",  "Sets path to the output-file");
     return 0;
 }
 
@@ -42,15 +45,30 @@ static errno_t set_in_config(Config *const config_ptr,
     return 0;
 }
 
+static errno_t set_out_config(Config *const config_ptr,
+                              char const *const **const str_ptr_ptr, char const *const end_str)
+{
+    assert(config_ptr); assert(!config_ptr->is_valid);
+    assert(str_ptr_ptr); assert(*str_ptr_ptr); assert(**str_ptr_ptr != end_str);
+    assert(!strcmp(**str_ptr_ptr, "--out"));
+
+    ++*str_ptr_ptr;
+    CHECK_FUNC(fopen_s, &config_ptr->out_stream, **str_ptr_ptr, "w");
+
+    return 0;
+}
+
 static char const *const flag_option_arr[__OPTION_COUNT] = {
        "--help",
        "--in",
+       "--out",
 };
 
 static errno_t (*const set_option_arr[__OPTION_COUNT])(Config *,
                                                        char const *const **, char const *) = {
        &set_help_config,
        &set_in_config,
+       &set_out_config,
 };
 
 
@@ -98,6 +116,7 @@ errno_t Config_Dtor(Config *const config_ptr)
     assert(config_ptr); assert(config_ptr->is_valid);
 
     if (config_ptr->inp_stream) { fclose(config_ptr->inp_stream); }
+    if (config_ptr->out_stream) { fclose(config_ptr->out_stream); }
 
     config_ptr->is_valid = false;
     return 0;

@@ -21,7 +21,9 @@ Bin_tree_node *copy_subtree(Bin_tree_node const *const src, errno_t *const err_p
 errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const src) {
     assert(src);
 
-    //TODO -
+    errno_t verify_err = 0;
+    CHECK_FUNC(Bin_tree_node_verify, &verify_err, src);
+    if (verify_err) { return verify_err; }
 
     errno_t cur_err = 0;
     errno_t *const err_ptr = &cur_err;
@@ -42,7 +44,7 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
             CHECK_FUNC(simplify_subtree, &right_res, src->right);       \
             if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) { \
                 *dest = LITER_(c_decl(right_res->data.val.val));        \
-                CHECK_FUNC(Bin_tree_node_Dtor, right_res);              \
+                CHECK_FUNC(delete_Bin_tree_node, right_res);            \
                 right_res = nullptr;                                    \
             }                                                           \
             else { *dest = name ## _(right_res); }                      \
@@ -66,20 +68,20 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                          \
                 if (left_res->data.val.val == left_const_crit) {                                \
                     *dest = LITER_(left_const_res);                                             \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                                   \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                                  \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                                 \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                                \
                     left_res  = nullptr;                                                        \
                     right_res = nullptr;                                                        \
                 }                                                                               \
                 else if (left_res->data.val.val == left_neutral) {                              \
                     *dest = right_res;                                                          \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                                   \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                                 \
                     left_res = nullptr;                                                         \
                 }                                                                               \
                 else if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                \
                     *dest = LITER_(c_decl(left_res->data.val.val, right_res->data.val.val));    \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                                   \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                                  \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                                 \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                                \
                     left_res  = nullptr;                                                        \
                     right_res = nullptr;                                                        \
                 }                                                                               \
@@ -88,14 +90,14 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
             else if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                    \
                 if (right_res->data.val.val == right_const_crit) {                              \
                     *dest = LITER_(right_const_res);                                            \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                                   \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                                  \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                                 \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                                \
                     left_res  = nullptr;                                                        \
                     right_res = nullptr;                                                        \
                 }                                                                               \
                 else if (right_res->data.val.val == right_neutral) {                            \
                     *dest = left_res;                                                           \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                                  \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                                \
                     right_res = nullptr;                                                        \
                 }                                                                               \
                 else { *dest = name ## _(left_res, right_res); }                                \
@@ -122,20 +124,20 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                      \
                 if (left_res->data.val.val == left_const_crit) {                            \
                     *dest = LITER_(left_const_res);                                         \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                               \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                              \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                             \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                            \
                     left_res  = nullptr;                                                    \
                     right_res = nullptr;                                                    \
                 }                                                                           \
                 else if (left_res->data.val.val == left_neutral) {                          \
                     *dest = right_res;                                                      \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                               \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                             \
                     left_res = nullptr;                                                     \
                 }                                                                           \
                 else if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {            \
                     *dest = LITER_(left_res->data.val.val c_decl right_res->data.val.val);  \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                               \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                              \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                             \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                            \
                     left_res  = nullptr;                                                    \
                     right_res = nullptr;                                                    \
                 }                                                                           \
@@ -144,14 +146,14 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
             else if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                \
                 if (right_res->data.val.val == right_const_crit) {                          \
                     *dest = LITER_(right_const_res);                                        \
-                    CHECK_FUNC(Bin_tree_node_Dtor, left_res);                               \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                              \
+                    CHECK_FUNC(delete_Bin_tree_node, left_res);                             \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                            \
                     left_res  = nullptr;                                                    \
                     right_res = nullptr;                                                    \
                 }                                                                           \
                 else if (right_res->data.val.val == right_neutral) {                        \
                     *dest = left_res;                                                       \
-                    CHECK_FUNC(Bin_tree_node_Dtor, right_res);                              \
+                    CHECK_FUNC(delete_Bin_tree_node, right_res);                            \
                     right_res = nullptr;                                                    \
                 }                                                                           \
                 else { *dest = name ## _(left_res, right_res); }                            \

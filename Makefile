@@ -7,8 +7,8 @@ test : front_end middle_end
 #TODO - how to avoid -B option always
 front_end :
 	@make -B -C ./Front-end/
-	@./Front-end/bin/Test.exe --in ./Code
+	@./Front-end/bin/Test.exe --in ./Code --out ./Front_end_tree
 
 middle_end :
 	@make -B -C ./Middle-end/
-	@./Middle-end/bin/Test.exe --in ./Tree
+	@./Middle-end/bin/Test.exe --in ./Front_end_tree --out ./Middle_end_tree

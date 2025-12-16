@@ -48,18 +48,18 @@ errno_t new_Bin_tree_node(Bin_tree_node **dest,
                           Expression_tree_data data);
 
 errno_t Bin_tree_node_Dtor(Bin_tree_node *node_ptr);
-errno_t delete_Bin_tree_node(Bin_tree_node **dest);
+errno_t delete_Bin_tree_node(Bin_tree_node *dest);
 
 #define TREE_NODE_INVALID     0B10'000'000'000
 #define TREE_NODE_VERIFY_USED 0B100'000'000'000
 errno_t Bin_tree_node_verify(errno_t *err_ptr, Bin_tree_node const *node_ptr);
 
-errno_t subtree_Dtor(Bin_tree_node *node_ptr);
+errno_t delete_subtree(Bin_tree_node *node_ptr);
 
 #define TREE_INVALID_STRUCTURE 0B1'000'000'000'000
 errno_t subtree_verify(errno_t *err_ptr, Bin_tree_node *node_ptr);
 
-errno_t subtree_dot_dump(FILE *out_stream, Bin_tree_node const *node_ptr);
+errno_t subtree_dot_dump(FILE *out_stream, Bin_tree_node *node_ptr);
 errno_t subtree_text_dump(FILE *out_stream, Bin_tree_node const *src);
 
 #define INCORRECT_TREE_INPUT 1'000

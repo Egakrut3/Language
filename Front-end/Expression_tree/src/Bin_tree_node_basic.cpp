@@ -36,12 +36,11 @@ errno_t Bin_tree_node_Dtor(Bin_tree_node *const node_ptr) {
     return 0;
 }
 
-errno_t delete_Bin_tree_node(Bin_tree_node **const dest) {
-    assert(dest); assert(*dest);
+errno_t delete_Bin_tree_node(Bin_tree_node *const dest) {
+    assert(dest);
 
-    CHECK_FUNC(Bin_tree_node_Dtor, *dest);
-    free(*dest);
-    *dest = nullptr;
+    CHECK_FUNC(Bin_tree_node_Dtor, dest);
+    free(dest);
 
     return 0;
 }
@@ -71,24 +70,24 @@ errno_t subtree_verify(errno_t *const err_ptr, Bin_tree_node *const node_ptr) {
     return 0;
 }
 
-static errno_t subtree_Dtor_uncheked(Bin_tree_node *const node_ptr) {
+static errno_t delete_subtree_uncheked(Bin_tree_node *const node_ptr) {
     if (!node_ptr) { return 0; }
 
-    CHECK_FUNC(subtree_Dtor_uncheked, node_ptr->left);
+    CHECK_FUNC(delete_subtree_uncheked, node_ptr->left);
     node_ptr->left = nullptr;
-    CHECK_FUNC(subtree_Dtor_uncheked, node_ptr->right);
+    CHECK_FUNC(delete_subtree_uncheked, node_ptr->right);
     node_ptr->right = nullptr;
-    CHECK_FUNC(Bin_tree_node_Dtor, node_ptr);
+    CHECK_FUNC(delete_Bin_tree_node, node_ptr);
 
     return 0;
 }
 
-errno_t subtree_Dtor(Bin_tree_node *const node_ptr) {
+errno_t delete_subtree(Bin_tree_node *const node_ptr) {
     errno_t verify_err = 0;
     CHECK_FUNC(Bin_tree_node_verify, &verify_err, node_ptr);
     if (verify_err) { return verify_err; }
 
-    CHECK_FUNC(subtree_Dtor_uncheked, node_ptr);
+    CHECK_FUNC(delete_subtree_uncheked, node_ptr);
 
     return 0;
 }
@@ -188,7 +187,7 @@ static errno_t dot_declare_vertex(FILE *const out_stream, Bin_tree_node const *c
     #undef EMPTY_COLOR
 }
 
-static errno_t subtree_following_dot_dump(FILE *const out_stream, Bin_tree_node const *const cur_node) {
+static errno_t subtree_following_dot_dump(FILE *const out_stream, Bin_tree_node *const cur_node) {
     #define LEFT_ARROW_COLOR  "red"
     #define RIGHT_ARROW_COLOR "blue"
 
@@ -198,18 +197,26 @@ static errno_t subtree_following_dot_dump(FILE *const out_stream, Bin_tree_node 
 
     CHECK_FUNC(dot_declare_vertex, out_stream, cur_node);
 
+    cur_node->verify_used = true;
+
     if (cur_node->left) {
         fprintf_s(out_stream, "\tnode%p:left -> node%p:top"
                               "[color = " LEFT_ARROW_COLOR "]\n",
                               cur_node, cur_node->left);
-        CHECK_FUNC(subtree_following_dot_dump, out_stream, cur_node->left);
+        if (!cur_node->left->verify_used) {
+            CHECK_FUNC(subtree_following_dot_dump, out_stream, cur_node->left);
+        }
     }
     if(cur_node->right) {
         fprintf_s(out_stream, "\tnode%p:right -> node%p:top"
                               "[color = " RIGHT_ARROW_COLOR "]\n",
                               cur_node, cur_node->right);
-        CHECK_FUNC(subtree_following_dot_dump, out_stream, cur_node->right);
+        if (!cur_node->right->verify_used) {
+            CHECK_FUNC(subtree_following_dot_dump, out_stream, cur_node->right);
+        }
     }
+
+    cur_node->verify_used = false;
 
     return 0;
 
@@ -217,7 +224,7 @@ static errno_t subtree_following_dot_dump(FILE *const out_stream, Bin_tree_node 
     #undef RIGHT_ARROW_COLOR
 }
 
-errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node const *const node_ptr) {
+errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node *const node_ptr) {
     #define BACKGROUND_COLOR  "white"
 
     assert(out_stream);
@@ -243,9 +250,13 @@ errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node const *const node
 errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node const *const src) {
     assert(out_stream);
 
-    fprintf_s(out_stream, "(");
+    if (!src) { fprintf_s(out_stream, "()"); return 0; }
 
-    if (!src) { fprintf_s(out_stream, ")"); return 0; }
+    errno_t verify_err = 0;
+    CHECK_FUNC(Bin_tree_node_verify, &verify_err, src);
+    if (verify_err) { return verify_err; }
+
+    fprintf_s(out_stream, "(");
 
     switch (src->data.type) {
         case EXPRESSION_TREE_LITERAL_TYPE:
