@@ -38,7 +38,7 @@ int main(int const argc, char const *const *const argv) {
 
     /*
     MAIN_CHECK_FUNC(fopen_s, &out_stream, "./Logs/Tree_out", "w");
-    MAIN_CHECK_FUNC(prefix_write_subtree, out_stream, cur_node);
+    MAIN_CHECK_FUNC(subtree_text_dump, out_stream, cur_node);
     fclose(out_stream);
     */
 

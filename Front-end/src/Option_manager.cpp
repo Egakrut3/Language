@@ -36,7 +36,8 @@ static errno_t set_in_config(Config *const config_ptr,
     assert(str_ptr_ptr); assert(*str_ptr_ptr); assert(**str_ptr_ptr != end_str);
     assert(!strcmp(**str_ptr_ptr, "--in"));
 
-    CHECK_FUNC(fopen_s, &config_ptr->inp_stream, *(++*str_ptr_ptr), "r");
+    ++*str_ptr_ptr;
+    CHECK_FUNC(fopen_s, &config_ptr->inp_stream, **str_ptr_ptr, "r");
 
     return 0;
 }

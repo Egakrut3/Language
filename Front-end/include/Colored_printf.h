@@ -1,7 +1,7 @@
 /*! \file */
 
-#ifndef INCLUDE_COLORED_PRINTF_H
-#define INCLUDE_COLORED_PRINTF_H
+#ifndef FRONT_END_INCLUDE_COLORED_PRINTF_H
+#define FRONT_END_INCLUDE_COLORED_PRINTF_H
 
 /*!
  *Contains colors than can be used to write in concole
@@ -23,4 +23,4 @@ int colored_printf(enum Color foreground_color, enum Color background_color,
 int colored_error_printf(enum Color foreground_color, enum Color background_color,
                          char const *format, ...);
 
-#endif /* INCLUDE_COLORED_PRINTF_H */
+#endif /* FRONT_END_INCLUDE_COLORED_PRINTF_H */

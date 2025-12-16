@@ -1,4 +1,5 @@
 #include "Bin_tree_node.h"
+#include <string.h>
 
 #define FINAL_CODE
 
@@ -25,23 +26,22 @@ errno_t new_Bin_tree_node(Bin_tree_node **const dest,
     return 0;
 }
 
-Bin_tree_node *DSL_new_Bin_tree_node(Bin_tree_node *const left, Bin_tree_node *const right,
-                                     Expression_tree_data const data,
-                                     errno_t *const err_ptr) {
-    assert(err_ptr);
-
-    Bin_tree_node *result = nullptr;
-    *err_ptr = My_calloc((void **)&result, 1, sizeof(Bin_tree_node));
-    *err_ptr = Bin_tree_node_Ctor(result, left, right, data);
-    return result;
-}
-
 errno_t Bin_tree_node_Dtor(Bin_tree_node *const node_ptr) {
     assert(node_ptr); assert(node_ptr->is_valid);
 
     if (node_ptr->data.type == EXPRESSION_TREE_ID_TYPE) { free(node_ptr->data.val.name); }
 
     node_ptr->is_valid = false;
+
+    return 0;
+}
+
+errno_t delete_Bin_tree_node(Bin_tree_node **const dest) {
+    assert(dest); assert(*dest);
+
+    CHECK_FUNC(Bin_tree_node_Dtor, *dest);
+    free(*dest);
+    *dest = nullptr;
 
     return 0;
 }
@@ -75,7 +75,9 @@ static errno_t subtree_Dtor_uncheked(Bin_tree_node *const node_ptr) {
     if (!node_ptr) { return 0; }
 
     CHECK_FUNC(subtree_Dtor_uncheked, node_ptr->left);
+    node_ptr->left = nullptr;
     CHECK_FUNC(subtree_Dtor_uncheked, node_ptr->right);
+    node_ptr->right = nullptr;
     CHECK_FUNC(Bin_tree_node_Dtor, node_ptr);
 
     return 0;
@@ -90,6 +92,8 @@ errno_t subtree_Dtor(Bin_tree_node *const node_ptr) {
 
     return 0;
 }
+
+
 
 static uint32_t ptr_hash(void const *const ptr) {
     uint32_t const mlt  = 0X01'00'01'93;
@@ -141,9 +145,7 @@ static errno_t dot_declare_vertex(FILE *const out_stream, Bin_tree_node const *c
                 //This include generates cases for all
                 //operations by applying previously declared
                 //macros HANDLE_OPERATION to them
-                #include "Text_description/Unary_functions.h"
-                #include "Text_description/Binary_functions.h"
-                #include "Text_description/Binary_operators.h"
+                #include "Operation_list.h"
                 #undef HANDLE_OPERATION
 
                 default:
@@ -234,6 +236,148 @@ errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node const *const node
     return 0;
 
     #undef BACKGROUND_COLOR
+}
+
+
+
+errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node const *const src) {
+    assert(out_stream);
+
+    fprintf_s(out_stream, "(");
+
+    if (!src) { fprintf_s(out_stream, ")"); return 0; }
+
+    switch (src->data.type) {
+        case EXPRESSION_TREE_LITERAL_TYPE:
+            fprintf_s(out_stream, "%lG ", src->data.val.val);
+            break;
+
+        case EXPRESSION_TREE_OPERATION_TYPE:
+            switch (src->data.val.operation) {
+                #define HANDLE_OPERATION(name, ...)     \
+                case name ## _OPERATION:                \
+                    fprintf_s(out_stream, #name " ");   \
+                    break;
+                //This include generates cases for all
+                //operations by applying previously declared
+                //macros HANDLE_OPERATION to them
+                #include "Operation_list.h"
+                #undef HANDLE_OPERATION
+
+                default:
+                    PRINT_LINE();
+                    abort();
+            }
+            break;
+
+        case EXPRESSION_TREE_ID_TYPE:
+            fprintf_s(out_stream, "\"%s\" ", src->data.val.name);
+            break;
+
+        default:
+            PRINT_LINE();
+            abort();
+    }
+
+    CHECK_FUNC(subtree_text_dump, out_stream, src->left);
+    CHECK_FUNC(subtree_text_dump, out_stream, src->right);
+    fprintf_s(out_stream, ")");
+
+    return 0;
+}
+
+static errno_t skip_spaces(char const **const cur_pos_ptr) {
+    assert(cur_pos_ptr); assert(*cur_pos_ptr);
+
+    size_t extra_len = 0;
+    CHECK_FUNC(My_sscanf_s, 0, *cur_pos_ptr, " %zn", &extra_len);
+    *cur_pos_ptr += extra_len;
+
+    return 0;
+}
+
+static errno_t require_character(char const **const cur_pos_ptr, char const c) {
+    assert(cur_pos_ptr); assert(*cur_pos_ptr);
+
+    CHECK_FUNC(skip_spaces, cur_pos_ptr);
+    if (**cur_pos_ptr != c) { return INCORRECT_TREE_INPUT; }
+    *cur_pos_ptr += 1;
+
+    return 0;
+}
+
+static bool is_number(char const *const cur_pos) {
+    assert(cur_pos);
+
+    char *last_ptr = nullptr;
+    strtod(cur_pos, &last_ptr);
+    return last_ptr != cur_pos;
+}
+
+static errno_t str_prefix_read_subtree_from_pos(Bin_tree_node **const dest,
+                                                char const **const cur_pos_ptr) {
+    assert(dest); assert(cur_pos_ptr); assert(*cur_pos_ptr);
+
+    size_t extra_len = 0;
+    CHECK_FUNC(skip_spaces, cur_pos_ptr);
+
+    if (**cur_pos_ptr == '(') {
+        *cur_pos_ptr += 1;
+
+        if (**cur_pos_ptr == ')') { *cur_pos_ptr += 1; *dest = nullptr; return 0; }
+
+        CHECK_FUNC(new_Bin_tree_node, dest, nullptr, nullptr, Expression_tree_data{});
+
+        CHECK_FUNC(skip_spaces, cur_pos_ptr);
+
+        if (is_number(*cur_pos_ptr)) {
+            (*dest)->data.type = EXPRESSION_TREE_LITERAL_TYPE;
+            CHECK_FUNC(My_sscanf_s, 1, *cur_pos_ptr, "%lG%zn", &(*dest)->data.val.val, &extra_len);
+            *cur_pos_ptr += extra_len;
+        }
+        #define HANDLE_OPERATION(name, ...)                                 \
+        else if (!strncmp(*cur_pos_ptr, #name, strlen(#name))) {            \
+            (*dest)->data.type          = EXPRESSION_TREE_OPERATION_TYPE;   \
+            (*dest)->data.val.operation = name ## _OPERATION;               \
+            *cur_pos_ptr += strlen(#name);                                  \
+        }
+        //This include generates branches of
+        //detecting and handling text description
+        //of all existing operations by applying
+        //previously declared macros HANDLE_OPERATION
+        //to them
+        #include "Operation_list.h"
+        #undef HANDLE_OPERATION
+        else if (**cur_pos_ptr == '"') {
+            *cur_pos_ptr += 1;
+
+            CHECK_FUNC(My_sscanf_s, 0, *cur_pos_ptr, "%*[^\"]%zn", &extra_len);
+            (*dest)->data.type = EXPRESSION_TREE_ID_TYPE;
+            CHECK_FUNC(My_calloc, (void **)&(*dest)->data.val.name,
+                                  extra_len + 1, sizeof(*(*dest)->data.val.name));
+            CHECK_FUNC(strncpy_s, (*dest)->data.val.name, extra_len + 1, *cur_pos_ptr, extra_len);
+            *cur_pos_ptr += extra_len;
+
+            CHECK_FUNC(require_character, cur_pos_ptr, '"');
+        }
+        else { return INCORRECT_TREE_INPUT; }
+
+        CHECK_FUNC(str_prefix_read_subtree_from_pos, &(*dest)->left,  cur_pos_ptr);
+        CHECK_FUNC(str_prefix_read_subtree_from_pos, &(*dest)->right, cur_pos_ptr);
+
+        CHECK_FUNC(require_character, cur_pos_ptr, ')');
+
+        return 0;
+    }
+
+    return INCORRECT_TREE_INPUT;
+}
+
+errno_t str_prefix_read_subtree(Bin_tree_node **const dest, char const *const buffer) {
+    char const *cur_pos = buffer;
+    CHECK_FUNC(str_prefix_read_subtree_from_pos, dest, &cur_pos);
+
+    return 0;
 }
 
 #undef FINAL_CODE

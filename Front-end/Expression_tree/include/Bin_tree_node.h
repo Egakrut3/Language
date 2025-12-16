@@ -15,9 +15,7 @@ enum Expression_tree_operation {
     //This includes generates enum-states for all
     //operations by applying previously declared
     //macros HANDLE_OPERATION to them
-    #include "Text_description/Unary_functions.h"
-    #include "Text_description/Binary_functions.h"
-    #include "Text_description/Binary_operators.h"
+    #include "Operation_list.h"
     #undef HANDLE_OPERATION
 };
 
@@ -45,16 +43,12 @@ struct Bin_tree_node {
 errno_t Bin_tree_node_Ctor(Bin_tree_node *node_ptr,
                            Bin_tree_node *left, Bin_tree_node *right,
                            Expression_tree_data data);
-
 errno_t new_Bin_tree_node(Bin_tree_node **dest,
                           Bin_tree_node *left, Bin_tree_node *right,
                           Expression_tree_data data);
 
-Bin_tree_node *DSL_new_Bin_tree_node(Bin_tree_node *left, Bin_tree_node *right,
-                                     Expression_tree_data data,
-                                     errno_t *err_ptr);
-
 errno_t Bin_tree_node_Dtor(Bin_tree_node *node_ptr);
+errno_t delete_Bin_tree_node(Bin_tree_node **dest);
 
 #define TREE_NODE_INVALID     0B10'000'000'000
 #define TREE_NODE_VERIFY_USED 0B100'000'000'000
@@ -63,25 +57,14 @@ errno_t Bin_tree_node_verify(errno_t *err_ptr, Bin_tree_node const *node_ptr);
 errno_t subtree_Dtor(Bin_tree_node *node_ptr);
 
 #define TREE_INVALID_STRUCTURE 0B1'000'000'000'000
-errno_t subtree_verify(errno_t *err_ptr, Bin_tree_node *node_ptr); //TODO - I can't add const here because of verify_used
+errno_t subtree_verify(errno_t *err_ptr, Bin_tree_node *node_ptr);
 
 errno_t subtree_dot_dump(FILE *out_stream, Bin_tree_node const *node_ptr);
-errno_t tex_subtree_dump(FILE *out_stream, Bin_tree_node const *node_ptr);
+errno_t subtree_text_dump(FILE *out_stream, Bin_tree_node const *src);
 
 #define INCORRECT_TREE_INPUT 1'000
 errno_t str_prefix_read_subtree(Bin_tree_node **dest, char const *buffer);
+
 errno_t str_infix_read_subtree(Bin_tree_node **dest, char const *buffer);
-
-errno_t prefix_write_subtree(FILE *out_stream, Bin_tree_node const *src);
-errno_t tex_write_subtree(FILE *out_stream, Bin_tree_node const *cur_node);
-
-Bin_tree_node *copy_subtree(Bin_tree_node const *src, errno_t *err_ptr);
-Bin_tree_node *subtree_differentiate(Bin_tree_node const *src, char const *main_var,
-                                     errno_t *err_ptr);
-errno_t tex_step_differentiate_subtree(FILE *out_stream,
-                                       Bin_tree_node **res_node, Bin_tree_node const *node_ptr,
-                                       char const *main_var);
-
-errno_t simplify_subtree(Bin_tree_node **dest, Bin_tree_node const *src);
 
 #endif /* EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H */

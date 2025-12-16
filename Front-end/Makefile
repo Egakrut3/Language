@@ -6,9 +6,10 @@ SRC_DIR = ./src/
 SRC_SUF = .cpp
 make_src_path = $(addprefix $(SRC_DIR), $(addsuffix $(SRC_SUF), $(1)))
 
-H_DIR = ./include/ ../include/
+H_DIR = ./include/ ./Expression_tree/include/ #TODO -
 
-LIB_DIR = ../static_libs/
+LIB_DIR = ./static_libs/
+LIBS = Colored_printf File_input Expression_tree
 
 CXX = g++
 CXX_FLAGS = -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Winline   \
@@ -19,31 +20,31 @@ CXX_FLAGS = -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-
 -Wsign-promo -Wstack-usage=8192 -Wstrict-aliasing -Wstrict-null-sentinel -Wtype-limits           \
 -Wwrite-strings -Werror=vla -D_EJUDGE_CLIENT_SIDE -D__USE_MINGW_ANSI_STDIO -D_DEBUG
 
-TARGET_LIB = $(addprefix $(LIB_DIR), libExpression_tree.a)
+TARGET = $(addprefix $(BIN_DIR), Test.exe)
 
-OBJ = Bin_tree_node_basic Text_functions Simplifier
+OBJ = My_functions Option_manager main
 
 make_object = $(call make_bin_path, $(1)) : $(call make_src_path, $(1)); \
 @$(CXX) $(CXX_FLAGS) -c $$< $(addprefix -I, $(H_DIR)) -o $$@
 
-.PHONY : all prepare clean
+.PHONY : all test prepare clean
 
 all : prepare $(call make_bin_path, $(OBJ))
-	@ar rcs $(TARGET_LIB) $(call make_bin_path, $(OBJ))
+	@$(CXX) $(CXX_FLAGS) $(call make_bin_path, $(OBJ)) -L$(LIB_DIR) $(addprefix -l, $(LIBS)) -o $(TARGET)
 	@echo Compilation end
 
+test : all
+	@$(TARGET) --in ./Tree_in
+
 prepare :
-	@mkdir -p $(BIN_DIR) $(LIB_DIR)
+	@make -B -C ./Expression_tree/
+	@mkdir -p $(BIN_DIR) ./Logs/
 
-$(call make_object, Bin_tree_node_basic)
+$(call make_object, My_functions)
 
-$(call make_object, Text_functions)
+$(call make_object, Option_manager)
 
-$(call make_object, Tex_functions)
-
-$(call make_object, Differentiator)
-
-$(call make_object, Simplifier)
+$(call make_object, main)
 
 clean:
-	@rm -rf $(BIN_DIR)
+	@rm -rf $(BIN_DIR) ./Logs/
