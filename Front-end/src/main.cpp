@@ -20,6 +20,7 @@ int main(int const argc, char const *const *const argv) {
 
     Bin_tree_node *cur_node = nullptr;
     MAIN_CHECK_FUNC(str_infix_read_subtree, &cur_node, buffer);
+    
     MAIN_CHECK_FUNC(subtree_text_dump, cur_config.out_stream, cur_node);
     fclose(cur_config.out_stream);
     cur_config.out_stream = nullptr;
@@ -31,7 +32,7 @@ int main(int const argc, char const *const *const argv) {
     fclose(out_stream);
     out_stream = nullptr;
     MAIN_CHECK_FUNC(system, "dot -Tsvg ./Logs/dot_file > ./Logs/dot_log.svg");
-    
+
 
     MAIN_CHECK_FUNC(delete_Bin_tree_node, cur_node);
     cur_node = nullptr;

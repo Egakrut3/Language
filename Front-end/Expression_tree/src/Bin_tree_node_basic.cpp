@@ -84,7 +84,7 @@ static errno_t delete_subtree_uncheked(Bin_tree_node *const node_ptr) {
 
 errno_t delete_subtree(Bin_tree_node *const node_ptr) {
     errno_t verify_err = 0;
-    CHECK_FUNC(Bin_tree_node_verify, &verify_err, node_ptr);
+    CHECK_FUNC(subtree_verify, &verify_err, src);
     if (verify_err) { return verify_err; }
 
     CHECK_FUNC(delete_subtree_uncheked, node_ptr);
@@ -253,7 +253,7 @@ errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node const *const src
     if (!src) { fprintf_s(out_stream, "()"); return 0; }
 
     errno_t verify_err = 0;
-    CHECK_FUNC(Bin_tree_node_verify, &verify_err, src);
+    CHECK_FUNC(subtree_verify, &verify_err, src);
     if (verify_err) { return verify_err; }
 
     fprintf_s(out_stream, "(");

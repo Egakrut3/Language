@@ -22,7 +22,7 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
     assert(src);
 
     errno_t verify_err = 0;
-    CHECK_FUNC(Bin_tree_node_verify, &verify_err, src);
+    CHECK_FUNC(subtree_verify, &verify_err, src);
     if (verify_err) { return verify_err; }
 
     errno_t cur_err = 0;
@@ -168,6 +168,16 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node const *const 
         #pragma GCC diagnostic ignored "-Wfloat-equal"
         #include "Simplifier_info/Binary_operators.h"
         #pragma GCC diagnostic pop
+        #undef HANDLE_OPERATION
+
+        #define HANDLE_OPERATION(name, ...) \
+        case name ## _OPERATION:            \
+            break;
+        //This include generates cases for
+        //all existing not ariphmetic operators
+        //by applying previously declared macros
+        //HANDLE_OPERATION to them
+        #include "Simplifier_info/Others.h"
         #undef HANDLE_OPERATION
 
         default:

@@ -1,4 +1,4 @@
-.PHONY : test front_end
+.PHONY : test front_end middle_end back_end
 
 test : front_end middle_end
 	@echo Full compilation finished
@@ -12,3 +12,7 @@ front_end :
 middle_end :
 	@make -B -C ./Middle-end/
 	@./Middle-end/bin/Test.exe --in ./Front_end_tree --out ./Middle_end_tree
+
+back_end :
+	@make -B -C ./Back-end/
+	@./Back-end/bin/Test.exe --in ./Middle_end_tree --out ./Asm_code

@@ -26,17 +26,6 @@ errno_t new_Bin_tree_node(Bin_tree_node **const dest,
     return 0;
 }
 
-Bin_tree_node *DSL_new_Bin_tree_node(Bin_tree_node *const left, Bin_tree_node *const right,
-                                     Expression_tree_data const data,
-                                     errno_t *const err_ptr) {
-    assert(err_ptr);
-
-    Bin_tree_node *result = nullptr;
-    *err_ptr = My_calloc((void **)&result, 1, sizeof(Bin_tree_node));
-    *err_ptr = Bin_tree_node_Ctor(result, left, right, data);
-    return result;
-}
-
 errno_t Bin_tree_node_Dtor(Bin_tree_node *const node_ptr) {
     assert(node_ptr); assert(node_ptr->is_valid);
 
@@ -95,7 +84,7 @@ static errno_t delete_subtree_uncheked(Bin_tree_node *const node_ptr) {
 
 errno_t delete_subtree(Bin_tree_node *const node_ptr) {
     errno_t verify_err = 0;
-    CHECK_FUNC(subtree_verify, &verify_err, src);
+    CHECK_FUNC(subtree_verify, &verify_err, node_ptr);
     if (verify_err) { return verify_err; }
 
     CHECK_FUNC(delete_subtree_uncheked, node_ptr);
@@ -207,6 +196,7 @@ static errno_t subtree_following_dot_dump(FILE *const out_stream, Bin_tree_node 
     if (!cur_node) { return 0; }
 
     CHECK_FUNC(dot_declare_vertex, out_stream, cur_node);
+
     cur_node->verify_used = true;
 
     if (cur_node->left) {
@@ -257,7 +247,7 @@ errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node *const node_ptr) 
 
 
 
-errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node const *const src) {
+errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node *const src) {
     assert(out_stream);
 
     if (!src) { fprintf_s(out_stream, "()"); return 0; }
