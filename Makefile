@@ -1,18 +1,23 @@
-.PHONY : test front_end middle_end back_end
+.PHONY : test prepare front_end middle_end back_end
 
-test : front_end middle_end
+test : prepare front_end middle_end
 	@echo Full compilation finished
 
-#TODO - very bad practice
 #TODO - how to avoid -B option always
-front_end :
-	@make -B -C ./Front-end/
-	@./Front-end/bin/Test.exe --in ./Code --out ./Front_end_tree
+prepare :
+	@make -B -C ./VLVR/My_functions/
+	@make -B -C ./VLVR/Expression_tree/
+	@make -B -C ./VLVR/Name_table/
 
-middle_end :
-	@make -B -C ./Middle-end/
-	@./Middle-end/bin/Test.exe --in ./Front_end_tree --out ./Middle_end_tree
+#TODO - very bad practice
+front_end : prepare
+	@make -B -C ./Front_end/
+	@./Front_end/bin/Front_end.exe --in Code --out Front_end_tree
 
-back_end :
-	@make -B -C ./Back-end/
-	@./Back-end/bin/Test.exe --in ./Middle_end_tree --out ./Asm_code
+middle_end : prepare
+	@make -B -C ./Middle_end/
+	@./Middle_end/bin/Middle_end.exe --in Front_end_tree --out Middle_end_tree
+
+back_end : prepare
+	@make -B -C ./Back_end/
+	@./Back_end/bin/Back_end.exe --in Middle_end_tree --out Asm_code
