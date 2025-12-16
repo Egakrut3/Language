@@ -1,0 +1,8 @@
+/*
+HANDLE_OPERATION(name, c_decl)
+*/
+
+HANDLE_OPERATION(SIN, sin)
+HANDLE_OPERATION(COS, cos)
+
+HANDLE_OPERATION(LN,  log)

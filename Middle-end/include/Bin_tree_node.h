@@ -1,5 +1,5 @@
-#ifndef EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H
-#define EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H
+#ifndef BIN_TREE_NODE_H
+#define BIN_TREE_NODE_H
 
 #include "Common.h"
 
@@ -46,6 +46,9 @@ errno_t Bin_tree_node_Ctor(Bin_tree_node *node_ptr,
 errno_t new_Bin_tree_node(Bin_tree_node **dest,
                           Bin_tree_node *left, Bin_tree_node *right,
                           Expression_tree_data data);
+Bin_tree_node *DSL_new_Bin_tree_node(Bin_tree_node *left, Bin_tree_node *right,
+                                     Expression_tree_data data,
+                                     errno_t *err_ptr);
 
 errno_t Bin_tree_node_Dtor(Bin_tree_node *node_ptr);
 errno_t delete_Bin_tree_node(Bin_tree_node **dest);
@@ -65,6 +68,7 @@ errno_t subtree_text_dump(FILE *out_stream, Bin_tree_node const *src);
 #define INCORRECT_TREE_INPUT 1'000
 errno_t str_prefix_read_subtree(Bin_tree_node **dest, char const *buffer);
 
-errno_t str_infix_read_subtree(Bin_tree_node **dest, char const *buffer);
+Bin_tree_node *copy_subtree(Bin_tree_node const *src, errno_t *err_ptr);
+errno_t simplify_subtree(Bin_tree_node **dest, Bin_tree_node const *src);
 
-#endif /* EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H */
+#endif /* BIN_TREE_NODE_H */

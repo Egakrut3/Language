@@ -33,7 +33,7 @@ static bool is_number(char const *const cur_pos) {
 
 enum Expression_token_type {
     TOKEN_LITERAL_TYPE,
-    TOKEN_OPERATOR_TYPE,
+    TOKEN_KEYWORD_TYPE,
     TOKEN_ID_TYPE,
 };
 
