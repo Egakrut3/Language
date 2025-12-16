@@ -1,5 +1,5 @@
-#ifndef COMMON_DECLARATIONS_H
-#define COMMON_DECLARATIONS_H
+#ifndef INCLUDE_COMMON_DECLARATIONS_H
+#define INCLUDE_COMMON_DECLARATIONS_H
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <stdint.h>
@@ -64,6 +64,5 @@ struct Var_info {
 };
 
 size_t const CANARY = 0XFACE'FACE'FACE'FACE;
-#define ALREADY_DELETED 666
 
-#endif
+#endif /* INCLUDE_COMMON_DECLARATIONS_H */

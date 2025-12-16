@@ -1,5 +1,5 @@
-#ifndef DSL_H
-#define DSL_H
+#ifndef EXPRESSION_TREE_INCLUDE_DSL_H
+#define EXPRESSION_TREE_INCLUDE_DSL_H
 
 #define COPY(src) copy_subtree(src, err_ptr)
 #define DIFF(src) subtree_differentiate(src, main_var, err_ptr)
@@ -54,4 +54,4 @@ DSL_new_Bin_tree_node(nullptr, src,                                             
                                            Expression_tree_node_val{.operation = COS_OPERATION}},   \
                       err_ptr)
 
-#endif
+#endif /* EXPRESSION_TREE_INCLUDE_DSL_H */

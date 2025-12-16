@@ -1,5 +1,5 @@
-#ifndef MY_FUNCTIONS_H
-#define MY_FUNCTIONS_H
+#ifndef INCLUDE_MY_FUNCTIONS_H
+#define INCLUDE_MY_FUNCTIONS_H
 
 #include "Common_declarations.h"
 
@@ -17,4 +17,4 @@ errno_t My_scanf_s(size_t count, char const *__restrict format, ...);
 
 errno_t My_strdup(char **dest, char const *src);
 
-#endif
+#endif /* INCLUDE_MY_FUNCTIONS_H */

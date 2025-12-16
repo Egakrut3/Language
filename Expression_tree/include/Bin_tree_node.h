@@ -1,5 +1,5 @@
-#ifndef BIN_TREE_NODE_H
-#define BIN_TREE_NODE_H
+#ifndef EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H
+#define EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H
 
 #include "Common.h"
 
@@ -84,4 +84,4 @@ errno_t tex_step_differentiate_subtree(FILE *out_stream,
 
 errno_t simplify_subtree(Bin_tree_node **dest, Bin_tree_node const *src);
 
-#endif
+#endif /* EXPRESSION_TREE_INCLUDE_BIN_TREE_NODE_H */

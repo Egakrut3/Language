@@ -1,5 +1,5 @@
-#ifndef OPTION_MANAGER_H
-#define OPTION_MANAGER_H
+#ifndef INCLUDE_OPTION_MANAGER_H
+#define INCLUDE_OPTION_MANAGER_H
 
 #include "Common.h"
 
@@ -18,4 +18,4 @@ errno_t Config_Ctor(Config *config_ptr, size_t argc, char const *const *argv);
 
 errno_t Config_Dtor(Config *config_ptr);
 
-#endif
+#endif /* INCLUDE_OPTION_MANAGER_H */
