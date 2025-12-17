@@ -1,46 +1,62 @@
-BIN_DIR = ./bin/
-BIN_SUF = .o
-make_bin_path = $(addprefix $(BIN_DIR), $(addsuffix $(BIN_SUF), $(1)))
+OBJ_DIR = ./bin/
+OBJ_SUF = .o
+make_obj_path = $(addprefix $(OBJ_DIR), $(addsuffix $(OBJ_SUF), $(1)))
 
 SRC_DIR = ./src/
 SRC_SUF = .cpp
 make_src_path = $(addprefix $(SRC_DIR), $(addsuffix $(SRC_SUF), $(1)))
 
+MAKE_DIR = ./Makefiles/
+MAKE_SUF = .mk
+make_makefile_path = $(addprefix $(MAKE_DIR), $(addsuffix $(MAKE_SUF), $(1)))
+
 H_DIR = ../VLVR/include/ ./include/
 
 LIB_DIR = ../VLVR/static_libs/
-LIBS = Colored_printf File_input My_functions Expression_tree
+LIB_SUF = .a
+make_lib_path = $(addprefix $(LIB_DIR), $(addprefix lib, $(addsuffix $(LIB_SUF), $(1))))
 
 CXX = g++
-CXX_FLAGS = -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Winline   \
--Wunreachable-code -Wmissing-declarations -Wmissing-include-dirs -Wswitch-enum -Wswitch-default  \
--Weffc++ -Wmain -Wextra -Wall -g -pipe -fexceptions -Wcast-qual -Wconversion -Wctor-dtor-privacy \
--Wempty-body -Wformat-security -Wformat=2 -Wignored-qualifiers -Wlogical-op                      \
--Wno-missing-field-initializers -Wnon-virtual-dtor -Woverloaded-virtual -Wpointer-arith          \
--Wsign-promo -Wstack-usage=8192 -Wstrict-aliasing -Wstrict-null-sentinel -Wtype-limits           \
+CXX_FLAGS = -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Winline   	\
+-Wunreachable-code -Wmissing-declarations -Wmissing-include-dirs -Wswitch-enum -Wswitch-default  	\
+-Weffc++ -Wmain -Wextra -Wall -g -pipe -fexceptions -Wcast-qual -Wconversion -Wctor-dtor-privacy	\
+-Wempty-body -Wformat-security -Wformat=2 -Wignored-qualifiers -Wlogical-op                      	\
+-Wno-missing-field-initializers -Wnon-virtual-dtor -Woverloaded-virtual -Wpointer-arith          	\
+-Wsign-promo -Wstack-usage=8192 -Wstrict-aliasing -Wstrict-null-sentinel -Wtype-limits           	\
 -Wwrite-strings -Werror=vla -D_EJUDGE_CLIENT_SIDE -D__USE_MINGW_ANSI_STDIO -D_DEBUG
 
-TARGET = $(addprefix $(BIN_DIR), Middle_end.exe)
+TARGET = $(addprefix $(OBJ_DIR), $(addsuffix .exe, Middle_end))
 
-OBJ = Simplifier Option_manager main
+.PHONY: all prepare clean
 
-make_object = $(call make_bin_path, $(1)) : $(call make_src_path, $(1)); \
-@$(CXX) $(CXX_FLAGS) -c $$< $(addprefix -I, $(H_DIR)) -o $$@
+SRCS = Simplifier Option_manager main
+LIBS = Colored_printf File_input My_functions Expression_tree
 
-.PHONY : all test prepare clean
-
-all : prepare $(call make_bin_path, $(OBJ))
-	@$(CXX) $(CXX_FLAGS) $(call make_bin_path, $(OBJ)) -L$(LIB_DIR) $(addprefix -l, $(LIBS)) -o $(TARGET)
+all: $(TARGET) | prepare
 	@echo Compilation end
 
-prepare :
-	@mkdir -p $(BIN_DIR)
+$(TARGET): $(call make_obj_path, $(SRCS))
+	@$(CXX) $(CXX_FLAGS) $(call make_obj_path, $(SRCS)) -L$(LIB_DIR) $(addprefix -l, $(LIBS)) -o $(TARGET)
 
-$(call make_object, Simplifier)
-
-$(call make_object, Option_manager)
-
-$(call make_object, main)
+prepare:
+	@mkdir -p $(OBJ_DIR) $(MAKE_DIR)
 
 clean:
-	@rm -rf $(BIN_DIR)
+	@rm -rf $(OBJ_DIR) $(MAKE_DIR) $(TARGET_LIB)
+
+.SECONDEXPANSION:
+
+%$(MAKE_SUF): $(call make_src_path, $$(*F)) | prepare
+	@rm -f $@
+	@$(CXX) -MM $(CXX_FLAGS) $(addprefix -I, $(H_DIR)) $< > $@.$$$$;						\
+	sed 's,\($(*F)\)\$(OBJ_SUF)[ :]*,$(call make_obj_path, \1) \./$@: ,g' < $@.$$$$ > $@;	\
+	rm $@.$$$$
+
+ifeq (, $(filter clean, $(MAKECMDGOALS)))
+include $(call make_makefile_path, $(SRCS))
+endif
+
+make_object = $(call make_obj_path, $(1)) : $(call make_src_path, $(1));	\
+@$(CXX) $(CXX_FLAGS) -c $$< $(addprefix -I, $(H_DIR)) -o $$@
+
+$(foreach src, $(SRCS), $(eval $(call make_object, $(src))))

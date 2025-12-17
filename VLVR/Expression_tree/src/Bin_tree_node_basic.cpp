@@ -45,6 +45,29 @@ errno_t delete_Bin_tree_node(Bin_tree_node *const dest) {
     return 0;
 }
 
+static errno_t delete_subtree_uncheked(Bin_tree_node *const node_ptr) {
+    assert(node_ptr);
+
+    if (node_ptr->left) { CHECK_FUNC(delete_subtree_uncheked, node_ptr->left); }
+    node_ptr->left = nullptr;
+    if (node_ptr->right) { CHECK_FUNC(delete_subtree_uncheked, node_ptr->right); }
+    node_ptr->right = nullptr;
+
+    CHECK_FUNC(delete_Bin_tree_node, node_ptr);
+
+    return 0;
+}
+
+errno_t delete_subtree(Bin_tree_node *const node_ptr) {
+    errno_t verify_err = 0;
+    CHECK_FUNC(subtree_verify, &verify_err, node_ptr);
+    if (verify_err) { return verify_err; }
+
+    CHECK_FUNC(delete_subtree_uncheked, node_ptr);
+
+    return 0;
+}
+
 errno_t Bin_tree_node_verify(errno_t *const err_ptr, Bin_tree_node const *const node_ptr) {
     assert(node_ptr); assert(err_ptr);
 
@@ -69,29 +92,6 @@ errno_t subtree_verify(errno_t *const err_ptr, Bin_tree_node *const node_ptr) {
         CHECK_FUNC(subtree_verify, err_ptr, node_ptr->right);
     }
     node_ptr->verify_used = false;
-
-    return 0;
-}
-
-static errno_t delete_subtree_uncheked(Bin_tree_node *const node_ptr) {
-    assert(node_ptr);
-
-    if (node_ptr->left) { CHECK_FUNC(delete_subtree_uncheked, node_ptr->left); }
-    node_ptr->left = nullptr;
-    if (node_ptr->right) { CHECK_FUNC(delete_subtree_uncheked, node_ptr->right); }
-    node_ptr->right = nullptr;
-
-    CHECK_FUNC(delete_Bin_tree_node, node_ptr);
-
-    return 0;
-}
-
-errno_t delete_subtree(Bin_tree_node *const node_ptr) {
-    errno_t verify_err = 0;
-    CHECK_FUNC(subtree_verify, &verify_err, node_ptr);
-    if (verify_err) { return verify_err; }
-
-    CHECK_FUNC(delete_subtree_uncheked, node_ptr);
 
     return 0;
 }
