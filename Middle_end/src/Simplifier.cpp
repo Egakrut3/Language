@@ -16,29 +16,39 @@ Bin_tree_node *DSL_new_Bin_tree_node(Bin_tree_node *const left, Bin_tree_node *c
     return result;
 }
 
-Bin_tree_node *copy_subtree(Bin_tree_node *const src, errno_t *const err_ptr) {
+static Bin_tree_node *copy_subtree_uncheked(Bin_tree_node *const src, errno_t *const err_ptr) {
+    assert(err_ptr);
+
     if (!src) { return nullptr; }
 
-    int verify_err = subtree_verify(err_ptr, src);
-    if (verify_err) { return nullptr; }
-    if (*err_ptr)   { return nullptr; }
-
     if (src->data.type == EXPRESSION_TREE_ID_TYPE) {
-        return DSL_new_Bin_tree_node(COPY(src->left), COPY(src->right),
+        return DSL_new_Bin_tree_node(copy_subtree_uncheked(src->left,  err_ptr),
+                                     copy_subtree_uncheked(src->right, err_ptr),
                                      Expression_tree_data{
                                      EXPRESSION_TREE_ID_TYPE,
                                      Expression_tree_node_val{.name = strdup(src->data.val.name)}},
                                      err_ptr);
     }
-    else { return DSL_new_Bin_tree_node(COPY(src->left), COPY(src->right), src->data, err_ptr); }
+    else {
+        return DSL_new_Bin_tree_node(copy_subtree_uncheked(src->left,  err_ptr),
+                                     copy_subtree_uncheked(src->right, err_ptr),
+                                     src->data,
+                                     err_ptr);
+    }
 }
 
-errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
-    assert(src);
+Bin_tree_node *copy_subtree(Bin_tree_node *const src, errno_t *const err_ptr) {
+    assert(err_ptr);
 
-    errno_t verify_err = 0;
-    CHECK_FUNC(subtree_verify, &verify_err, src);
-    if (verify_err) { return verify_err; }
+    int verify_err = subtree_verify(err_ptr, src);
+    if (verify_err) { *err_ptr = verify_err; return nullptr; }
+    if (*err_ptr)   { return nullptr; }
+
+    return copy_subtree_uncheked(src, err_ptr);
+}
+
+static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_node *const src) {
+    assert(src);
 
     errno_t cur_err = 0;
     errno_t *const err_ptr = &cur_err;
@@ -48,21 +58,23 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
 
         *dest = COPY(src);
 
-        return 0;
+        return cur_err;
     }
 
     Bin_tree_node *left_res  = nullptr,
                   *right_res = nullptr;
     switch (src->data.val.operation) {
-        #define HANDLE_OPERATION(name, c_decl, ...)                     \
-        case name ## _OPERATION:                                        \
-            CHECK_FUNC(simplify_subtree, &right_res, src->right);       \
-            if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) { \
-                *dest = LITER_(c_decl(right_res->data.val.val));        \
-                CHECK_FUNC(delete_Bin_tree_node, right_res);            \
-                right_res = nullptr;                                    \
-            }                                                           \
-            else { *dest = name ## _(right_res); }                      \
+        #define HANDLE_OPERATION(name, c_decl, ...)                         \
+        case name ## _OPERATION:                                            \
+            assert(!src->left);                                             \
+                                                                            \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);  \
+            if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {     \
+                *dest = LITER_(c_decl(right_res->data.val.val));            \
+                CHECK_FUNC(delete_Bin_tree_node, right_res);                \
+                right_res = nullptr;                                        \
+            }                                                               \
+            else { *dest = name ## _(right_res); }                          \
             break;
         //This include generates cases for
         //simplifying all existing unary functions
@@ -78,8 +90,8 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
                                  left_const_crit,  left_const_res,                              \
                                  right_const_crit, right_const_res, ...)                        \
         case name ## _OPERATION:                                                                \
-            CHECK_FUNC(simplify_subtree, &left_res,  src->left);                                \
-            CHECK_FUNC(simplify_subtree, &right_res, src->right);                               \
+            CHECK_FUNC(simplify_subtree_uncheked, &left_res,  src->left);                       \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);                      \
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                          \
                 if (left_res->data.val.val == left_const_crit) {                                \
                     *dest = LITER_(left_const_res);                                             \
@@ -129,13 +141,12 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
         #pragma GCC diagnostic pop
         #undef HANDLE_OPERATION
 
-
         #define HANDLE_OPERATION(name, c_decl, left_neutral, right_neutral,                 \
                                  left_const_crit,  left_const_res,                          \
                                  right_const_crit, right_const_res, ...)                    \
         case name ## _OPERATION:                                                            \
-            CHECK_FUNC(simplify_subtree, &left_res,  src->left);                            \
-            CHECK_FUNC(simplify_subtree, &right_res, src->right);                           \
+            CHECK_FUNC(simplify_subtree_uncheked, &left_res,  src->left);                   \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);                  \
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                      \
                 if (left_res->data.val.val == left_const_crit) {                            \
                     *dest = LITER_(left_const_res);                                         \
@@ -187,6 +198,7 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
 
         #define HANDLE_OPERATION(name, ...) \
         case name ## _OPERATION:            \
+            *dest = COPY(src);              \
             break;
         //This include generates cases for
         //all existing not ariphmetic operators
@@ -199,6 +211,16 @@ errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
             PRINT_LINE();
             abort();
     }
+
+    return cur_err;
+}
+
+errno_t simplify_subtree(Bin_tree_node **const dest, Bin_tree_node *const src) {
+    errno_t verify_err = 0;
+    CHECK_FUNC(subtree_verify, &verify_err, src);
+    if (verify_err) { return verify_err; }
+
+    CHECK_FUNC(simplify_subtree_uncheked, dest, src);
 
     return 0;
 }

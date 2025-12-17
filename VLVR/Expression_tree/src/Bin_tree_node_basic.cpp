@@ -80,9 +80,9 @@ errno_t Bin_tree_node_verify(errno_t *const err_ptr, Bin_tree_node const *const 
 errno_t subtree_verify(errno_t *const err_ptr, Bin_tree_node *const node_ptr) {
     assert(err_ptr); assert(node_ptr);
 
-    if (node_ptr->verify_used) { *err_ptr |= TREE_INVALID_STRUCTURE; return 0; }
-
     CHECK_FUNC(Bin_tree_node_verify, err_ptr, node_ptr);
+
+    if (node_ptr->verify_used) { *err_ptr |= TREE_INVALID_STRUCTURE; return 0; }
 
     node_ptr->verify_used = true;
     if (node_ptr->left and node_ptr->left->verify_used) {
@@ -245,16 +245,10 @@ errno_t subtree_dot_dump(FILE *const out_stream, Bin_tree_node *const node_ptr) 
     #undef BACKGROUND_COLOR
 }
 
-
-
-errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node *const src) {
+static errno_t subtree_text_dump_uncheked(FILE *const out_stream, Bin_tree_node const *const src) {
     assert(out_stream);
 
     if (!src) { fprintf_s(out_stream, "()"); return 0; }
-
-    errno_t verify_err = 0;
-    CHECK_FUNC(subtree_verify, &verify_err, src);
-    if (verify_err) { return verify_err; }
 
     fprintf_s(out_stream, "(");
 
@@ -290,10 +284,20 @@ errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node *const src) {
             abort();
     }
 
-    CHECK_FUNC(subtree_text_dump, out_stream, src->left);
-    CHECK_FUNC(subtree_text_dump, out_stream, src->right);
+    CHECK_FUNC(subtree_text_dump_uncheked, out_stream, src->left);
+    CHECK_FUNC(subtree_text_dump_uncheked, out_stream, src->right);
 
     fprintf_s(out_stream, ")");
+
+    return 0;
+}
+
+errno_t subtree_text_dump(FILE *const out_stream, Bin_tree_node *const src) {
+    errno_t verify_err = 0;
+    CHECK_FUNC(subtree_verify, &verify_err, src);
+    if (verify_err) { return verify_err; }
+
+    CHECK_FUNC(subtree_text_dump_uncheked, out_stream, src);
 
     return 0;
 }

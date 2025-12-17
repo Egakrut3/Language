@@ -2,7 +2,6 @@
 #define DSL_H
 
 #define COPY(src) copy_subtree(src, err_ptr)
-#define DIFF(src) subtree_differentiate(src, main_var, err_ptr)
 
 #define LITER_(lit_val)                                                                 \
 DSL_new_Bin_tree_node(nullptr, nullptr,                                                 \
