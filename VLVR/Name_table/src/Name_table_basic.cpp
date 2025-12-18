@@ -36,12 +36,9 @@ errno_t Name_table_set(Name_table *const dest, char const *const str, size_t con
     size_t any_empty = -1;
     for (size_t i = 0; i < dest->capacity; ++i) {
         if (!dest->keys[i]) {
-            if (!strcmp(dest->keys[i], str)) { return KEY_ALREADY_EXISTS; }
-
             any_empty = i;
-
-            return 0;
         }
+        else if (!strcmp(dest->keys[i], str)) { return KEY_ALREADY_EXISTS; }
     }
 
     if (any_empty != (size_t)-1) { dest->keys[any_empty] = str; dest->vals[any_empty] = val; return 0; }

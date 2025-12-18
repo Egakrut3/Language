@@ -54,7 +54,8 @@ static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_no
     errno_t *const err_ptr = &cur_err;
 
     if (src->data.type != EXPRESSION_TREE_OPERATION_TYPE) {
-        assert(!src->left); assert(!src->right);
+        if (src->left)  { return INVALID_AST; }
+        if (src->right) { return INVALID_AST; }
 
         *dest = COPY(src);
 
@@ -66,7 +67,8 @@ static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_no
     switch (src->data.val.operation) {
         #define HANDLE_OPERATION(name, c_decl, ...)                         \
         case name ## _OPERATION:                                            \
-            assert(!src->left);                                             \
+            if (src->left)   { return INVALID_AST; }                        \
+            if (!src->right) { return INVALID_AST; }                        \
                                                                             \
             CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);  \
             if (right_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {     \
@@ -90,6 +92,9 @@ static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_no
                                  left_const_crit,  left_const_res,                              \
                                  right_const_crit, right_const_res, ...)                        \
         case name ## _OPERATION:                                                                \
+            if (!src->left)  { return INVALID_AST; }                                            \
+            if (!src->right) { return INVALID_AST; }                                            \
+                                                                                                \
             CHECK_FUNC(simplify_subtree_uncheked, &left_res,  src->left);                       \
             CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);                      \
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                          \
@@ -145,6 +150,9 @@ static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_no
                                  left_const_crit,  left_const_res,                          \
                                  right_const_crit, right_const_res, ...)                    \
         case name ## _OPERATION:                                                            \
+            if (!src->left)  { return INVALID_AST; }                                        \
+            if (!src->right) { return INVALID_AST; }                                        \
+                                                                                            \
             CHECK_FUNC(simplify_subtree_uncheked, &left_res,  src->left);                   \
             CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);                  \
             if (left_res->data.type == EXPRESSION_TREE_LITERAL_TYPE) {                      \
@@ -196,15 +204,37 @@ static errno_t simplify_subtree_uncheked(Bin_tree_node **const dest, Bin_tree_no
         #pragma GCC diagnostic pop
         #undef HANDLE_OPERATION
 
-        #define HANDLE_OPERATION(name, ...) \
-        case name ## _OPERATION:            \
-            *dest = COPY(src);              \
+        #define HANDLE_OPERATION(name, ...)                                     \
+        case name ## _OPERATION:                                                \
+            if (src->left)   { return INVALID_AST; }                            \
+            if (!src->right) { return INVALID_AST; }                            \
+                                                                                \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);      \
+                                                                                \
+            CHECK_FUNC(new_Bin_tree_node, dest, nullptr, right_res, src->data); \
             break;
         //This include generates cases for
-        //all existing not ariphmetic operators
+        //all existing not ariphmetic unary operators
         //by applying previously declared macros
         //HANDLE_OPERATION to them
-        #include "Simplifier_info/Others.h"
+        #include "Simplifier_info/Others_unary.h"
+        #undef HANDLE_OPERATION
+
+        #define HANDLE_OPERATION(name, ...)                                         \
+        case name ## _OPERATION:                                                    \
+            if (!src->left)  { return INVALID_AST; }                                \
+            if (!src->right) { return INVALID_AST; }                                \
+                                                                                    \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->left);           \
+            CHECK_FUNC(simplify_subtree_uncheked, &right_res, src->right);          \
+                                                                                    \
+            CHECK_FUNC(new_Bin_tree_node, dest, left_res, right_res, src->data);    \
+            break;
+        //This include generates cases for
+        //all existing not ariphmetic binary operators
+        //by applying previously declared macros
+        //HANDLE_OPERATION to them
+        #include "Simplifier_info/Others_binary.h"
         #undef HANDLE_OPERATION
 
         default:

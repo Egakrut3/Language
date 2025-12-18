@@ -20,7 +20,7 @@ Middle_end: | prepare
 	@./Middle_end/bin/Middle_end.exe --in Front_end_tree --out Middle_end_tree
 
 Back_end: | prepare
-	@$(MAKE) -B -C ./Back_end/
+	@$(MAKE) -C ./Back_end/
 	@./Back_end/bin/Back_end.exe --in Middle_end_tree --out Asm_code
 
 clean:

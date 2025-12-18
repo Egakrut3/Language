@@ -1,7 +1,6 @@
 #include "Common.h"
 #include "Option_manager.h"
-#include "Bin_tree_node.h"
-#include "Name_table.h"
+#include "Make_assembler_code.h"
 
 int main(int const argc, char const *const *const argv) {
     #define FINAL_CODE
@@ -14,17 +13,28 @@ int main(int const argc, char const *const *const argv) {
     #define FINAL_CODE          \
     Config_Dtor(&cur_config);
 
-    Name_table mp = {};
-    MAIN_CHECK_FUNC(Name_table_Ctor, &mp);
+    char *buffer = nullptr;
+    MAIN_CHECK_FUNC(get_all_content, cur_config.inp_stream, nullptr, &buffer);
+    fclose(cur_config.inp_stream);
+    cur_config.inp_stream = nullptr;
 
-    MAIN_CHECK_FUNC(Name_table_set, &mp, "abcD", 3);
-    MAIN_CHECK_FUNC(Name_table_set, &mp, "def",  6);
-    size_t val = 0;
-    fprintf_s(stderr, "%zu\n", Name_table_get(&val, &mp, "abcd"));
-    MAIN_CHECK_FUNC(Name_table_get, &val, &mp, "abcD");
-    fprintf_s(stderr, "%zu\n", val);
-    MAIN_CHECK_FUNC(Name_table_get, &val, &mp, "def");
-    fprintf_s(stderr, "%zu\n", val);
+    Bin_tree_node *cur_node = nullptr;
+    MAIN_CHECK_FUNC(str_prefix_read_subtree, &cur_node, buffer);
+
+    FILE *out_stream = nullptr;
+    MAIN_CHECK_FUNC(fopen_s, &out_stream, "./Logs/dot_file", "w");
+    MAIN_CHECK_FUNC(subtree_dot_dump, out_stream, cur_node);
+    fclose(out_stream);
+    out_stream = nullptr;
+    MAIN_CHECK_FUNC(system, "dot -Tsvg ./Logs/dot_file > ./Logs/dot_log.svg");
+
+    MAIN_CHECK_FUNC(make_assembler_code, cur_config.out_stream, cur_node);
+    fclose(cur_config.out_stream);
+    cur_config.out_stream = nullptr;
+
+
+
+
 
     //colored_printf(GREEN, BLACK, "\n\n\nCOMMIT GITHUB\n\n");
     CLEAR_RESOURCES();
